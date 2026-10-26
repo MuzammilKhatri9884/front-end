@@ -17,22 +17,32 @@ export default function AttendancePerformance({
   compact = false,
   department = "",
   revision = 0,
+  prefetched,
 }: {
   personal?: boolean;
   compact?: boolean;
   department?: string;
   revision?: number;
+  prefetched?: Row;
 }) {
   const [month, setMonth] = useState(() =>
       new Date()
         .toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" })
         .slice(0, 7),
     ),
-    [data, setData] = useState<Row | null>(null),
-    [busy, setBusy] = useState(true),
+    [data, setData] = useState<Row | null>(
+      prefetched?.month === month ? prefetched : null,
+    ),
+    [busy, setBusy] = useState(prefetched?.month !== month),
     [error, setError] = useState(""),
     [page, setPage] = useState(1);
   useEffect(() => {
+    if (prefetched?.month === month) {
+      setData(prefetched);
+      setBusy(false);
+      setError("");
+      return;
+    }
     let live = true;
     setBusy(true);
     setError("");
@@ -50,7 +60,7 @@ export default function AttendancePerformance({
     return () => {
       live = false;
     };
-  }, [month, department, revision]);
+  }, [month, department, revision, prefetched]);
   const d = data?.daily || {},
     summary = data?.summary || {},
     items = data?.items || [];

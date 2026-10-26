@@ -3042,6 +3042,7 @@ function Dashboard({
           personal={employee}
           department={filters.department}
           revision={revision}
+          prefetched={d.monthlyPerformance}
         />
         <div className="dashboard-grid">
           <section className="card trend-card">
