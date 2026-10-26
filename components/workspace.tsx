@@ -182,18 +182,23 @@ export default function Workspace({ boot }: { boot: Row }) {
   }, []);
   useEffect(() => {
     if (!user || user.mustChangePassword) return;
-    api
-      .get("/policy")
-      .then((r) => setCompany(r.data))
-      .catch(() => {});
+    if (!Object.keys(company).length) {
+      api
+        .get("/policy")
+        .then((r) => setCompany(r.data))
+        .catch(() => {});
+    }
     api
       .get("/notifications")
       .then((r) => setNotes(r.data))
       .catch(() => {});
-  }, [user, revision]);
-  const signed = (u: Row) => {
+  // Settings and notifications are session data; page refreshes should not reload them.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+  const signed = (u: Row, successMessage = "Successfully logged in.") => {
     setSetup(false);
     setUser(u);
+    message(successMessage);
     router.replace("/");
   };
   if (boot.offline && !user)
@@ -219,7 +224,15 @@ export default function Workspace({ boot }: { boot: Row }) {
         </div>
       </div>
     );
-  if (!user) return <AuthScreen setup={setup} signed={signed} theme={theme} toggleTheme={toggleTheme} />;
+  if (!user)
+    return (
+      <AuthScreen
+        setup={setup}
+        signed={signed}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
+    );
   if (["login", "signup"].includes(page)) return <Loading />;
   if (user.mustChangePassword)
     return (
@@ -1666,13 +1679,14 @@ function People({ user, revision, refresh, message }: PageProps) {
                   await api.patch("/employees/" + modal._id, values);
                   message("Employee profile updated.");
                 } else {
-                  if (!modal.referencePhoto)
-                    throw new Error(
-                      "Upload an attendance reference photo before creating the employee.",
-                    );
                   const r = await api.post(
                     "/employees",
-                    { ...values, referencePhoto: modal.referencePhoto },
+                    {
+                      ...values,
+                      ...(modal.referencePhoto
+                        ? { referencePhoto: modal.referencePhoto }
+                        : {}),
+                    },
                     { timeout: 30000 },
                   );
                   setCredentials({
@@ -2652,7 +2666,7 @@ function AuthScreen({
   toggleTheme,
 }: {
   setup: boolean;
-  signed: (u: Row) => void;
+  signed: (u: Row, successMessage?: string) => void;
   theme: "light" | "dark";
   toggleTheme: () => void;
 }) {
@@ -2768,7 +2782,12 @@ function AuthScreen({
                     "No company account exists in this database yet. Choose Sign up to create the company and first Admin.",
                   );
                 const r = await api.post(signup ? "/setup" : "/auth/login", d);
-                signed(r.data.user);
+                signed(
+                  r.data.user,
+                  signup
+                    ? "Workspace created successfully."
+                    : "Successfully logged in.",
+                );
               }}
               label={signup ? "Sign up & create workspace" : "Log in"}
             />

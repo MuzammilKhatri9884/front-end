@@ -79,7 +79,7 @@ export default function EmployeePhoto({
         )}
       </div>
       <div className="reference-photo-content">
-        <h3>Attendance reference photo{!employee._id ? " *" : ""}</h3>
+        <h3>Attendance reference photo · optional</h3>
         <p>
           Upload a clear, front-facing photo with exactly one face. It is stored
           privately and used by the server to match camera check-ins and
@@ -89,7 +89,7 @@ export default function EmployeePhoto({
           {employee.faceEnrolledAt
             ? "Face verification is enrolled."
             : editable
-              ? "A reference photo is required before this employee can mark attendance."
+              ? "A reference photo is needed only for face-verified camera attendance. HR can add it later."
               : "Ask HR to enroll your reference photo before marking attendance."}
         </small>
         {editable && (
